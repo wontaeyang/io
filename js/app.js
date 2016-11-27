@@ -8,53 +8,86 @@ var two = new Two({
   autostart: true
 }).appendTo(body);
 
+var base = two.renderer.domElement
+
+// Resize canvas
+two.bind('resize', function() {
+  two.width = window.innerWidth;
+  two.height = window.innerHeight;
+  two.update();
+})
+
+base.addEventListener('click', function() {
+  Node.instances.forEach(function(node) {
+    var posX = node.body.translation.x
+    var posY = node.body.translation.y
+  })
+}, false)
+
 function Node() {
-  this.posX = 30;
-  this.posY = 30;
+  Node.instances = [];
+  Node.selected = [];
+
+  this.posX = 60;
+  this.posY = 60;
   this.width = 30;
   this.height = 30;
   this.selected = false;
   this.body = two.makeRectangle(this.posX, this.posY, this.width, this.height);
+  this.body.fill = 'rgb(0, 200, 255)';
+  this.body.opacity = 0.75;
+  this.body.noStroke();
 
   // Initial setup of node
   this.init = function() {
-    this.body.fill = 'rgb(0, 200, 255)';
-    this.body.opacity = 0.75;
-    this.body.noStroke();
+    // Track instances
+    Node.instances.push(this);
     two.update(); // draw the node
 
     // Add click event
-    this.body._renderer.elem.addEventListener('click', function(){
-      if (this.selected) {
-        this.deselect();
-        this.selected = false;
-      } else {
-        this.select();
-        this.selected = true;
-      }
+    this.body._renderer.elem.addEventListener('click', function() {
+      this.select();
+      two.update();
+    }.bind(this), false)
 
+    this.body._renderer.elem.addEventListener('mousemove', function(e) {
+      if (this.drag) {
+        this.body.translation.set(e.clientX, e.clientY);
+      }
       two.update();
     }.bind(this), false)
   }
+
+  this.update = function() {
+    this.body.width = this.width;
+    this.body.height = this.height;
+    this.body.translation.set(this.posX, this.posY);
+    two.update();
+  }
+
   this.select = function() {
     this.body.stroke = 'orangered';
     this.body.linewidth = 3;
-
+    this.selected = true;
   }
+
   this.deselect = function () {
     this.body.noStroke();
+    this.selected = false;
   }
+
   this.init();
 }
 
 function draw() {
   var node = new Node;
+  debugger;
 }
 
 draw();
 
 
-
+// Background
 function addBackdrop(d) {
   var dimensions = d || 50;
   var two = new Two({
