@@ -1,14 +1,30 @@
+require('./components/background.js')(); // Setup background
+var Module = require('./components/module.js');
 var Two = require('./two.js')
-var body = document.body;
 
-addBackdrop(30);
-
+// Setup Two
 var two = new Two({
   fullscreen: true,
   autostart: true
-}).appendTo(body);
+}).appendTo(document.body);
 
-var base = two.renderer.domElement
+// Layers
+var background = two.makeGroup();
+var middleground = two.makeGroup();
+var foreground = two.makeGroup();
+
+// Backdrop
+var backdrop = two.makeRectangle(window.innerWidth /2, window.innerHeight / 2, window.innerWidth, window.innerHeight);
+backdrop.fill = 'red';
+backdrop.opacity = 0;
+two.update(); //need to generate dom model
+backdrop._renderer.elem.addEventListener('click', function(){
+  Module.instances.forEach(function(m) {
+    m.deselect();
+  })
+}, false)
+background.add(backdrop);
+
 
 // Resize canvas
 two.bind('resize', function() {
@@ -17,97 +33,21 @@ two.bind('resize', function() {
   two.update();
 })
 
-base.addEventListener('click', function() {
-  Node.instances.forEach(function(node) {
-    var posX = node.body.translation.x
-    var posY = node.body.translation.y
-  })
-}, false)
-
-function Node() {
-  Node.instances = [];
-  Node.selected = [];
-
-  this.posX = 60;
-  this.posY = 60;
-  this.width = 30;
-  this.height = 30;
-  this.selected = false;
-  this.body = two.makeRectangle(this.posX, this.posY, this.width, this.height);
-  this.body.fill = 'rgb(0, 200, 255)';
-  this.body.opacity = 0.75;
-  this.body.noStroke();
-
-  // Initial setup of node
-  this.init = function() {
-    // Track instances
-    Node.instances.push(this);
-    two.update(); // draw the node
-
-    // Add click event
-    this.body._renderer.elem.addEventListener('click', function() {
-      this.select();
-      two.update();
-    }.bind(this), false)
-
-    this.body._renderer.elem.addEventListener('mousemove', function(e) {
-      if (this.drag) {
-        this.body.translation.set(e.clientX, e.clientY);
-      }
-      two.update();
-    }.bind(this), false)
-  }
-
-  this.update = function() {
-    this.body.width = this.width;
-    this.body.height = this.height;
-    this.body.translation.set(this.posX, this.posY);
-    two.update();
-  }
-
-  this.select = function() {
-    this.body.stroke = 'orangered';
-    this.body.linewidth = 3;
-    this.selected = true;
-  }
-
-  this.deselect = function () {
-    this.body.noStroke();
-    this.selected = false;
-  }
-
-  this.init();
-}
 
 function draw() {
-  var node = new Node;
+  var module = new Module(two);
+  var module_02 = new Module(two, {posX: 90, posY: 90, width: 30, height: 30, fill: 'blue', opacity: 0.75})
+  foreground.add(module_02);
+  foreground.add(module);
   debugger;
 }
 
 draw();
 
 
-// Background
-function addBackdrop(d) {
-  var dimensions = d || 50;
-  var two = new Two({
-    type: Two.Types.canvas,
-    width: dimensions,
-    height: dimensions
-  });
 
-  var r = dimensions / 10;
-  var center = dimensions / 2;
 
-  var a = two.makeLine(center - r, center, center + r, center);
-  var b = two.makeLine(center, center - r, center, center + r);
 
-  a.stroke = b.stroke = '#aaa';
-  a.linewidth = b.linewidth = 0.25;
 
-  two.update();
 
-  body.style.backgroundImage = 'url(' + two.renderer.domElement.toDataURL() + ')'
-  body.style.backgroundRepeat = 'repeat'
-  body.style.backgroundSize = dimensions + 'px ' + dimensions + 'px'
-}
+
